@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/aquasecurity/postee/alertmgr"
-	"github.com/aquasecurity/postee/utils"
-	"github.com/aquasecurity/postee/webserver"
-	"github.com/spf13/cobra"
 	"log"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
+
+	"github.com/aquasecurity/postee/router"
+	"github.com/aquasecurity/postee/utils"
+	"github.com/aquasecurity/postee/webserver"
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -18,6 +19,8 @@ const (
 	TLS       = "0.0.0.0:8445"
 	URL_USAGE = "The socket to bind to, specified using host:port."
 	TLS_USAGE = "The TLS socket to bind to, specified using host:port."
+	//	CFG_USAGE  = "The folder which contains alert configuration files."
+	//	CFG_FOLDER = "/config/"
 	CFG_FILE  = "/config/cfg.yaml"
 	CFG_USAGE = "The alert configuration file."
 )
@@ -58,8 +61,13 @@ func main() {
 			cfgfile = os.Getenv("AQUAALERT_CFG")
 		}
 
-		go alertmgr.Instance().Start(cfgfile)
-		defer alertmgr.Instance().Terminate()
+		err := router.Instance().Start(cfgfile)
+		if err != nil {
+			log.Printf("Can't start alert manager %v", err)
+			return
+		}
+
+		defer router.Instance().Terminate()
 
 		go webserver.Instance().Start(url, tls)
 		defer webserver.Instance().Terminate()

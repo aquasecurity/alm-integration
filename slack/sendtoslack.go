@@ -12,7 +12,7 @@ func SendToUrl(url string, data []byte) error {
 	r := bytes.NewReader(data)
 	resp, err := http.Post(url, "application/json", r)
 	if err != nil {
-		log.Printf("Post request to Slack Error: %v", err)
+		log.Printf("Slack API error: %v", err)
 		return err
 	}
 	if resp.StatusCode != http.StatusOK {
@@ -21,7 +21,7 @@ func SendToUrl(url string, data []byte) error {
 		if err != nil {
 			return err
 		}
-		return fmt.Errorf("Sending had a problem. Status: %q. Message: %q",
+		return fmt.Errorf("Slack API error: Status: %q. Message: %q",
 			resp.Status, msg)
 	}
 	return nil

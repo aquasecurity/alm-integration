@@ -1,0 +1,30 @@
+version: "3"
+services:
+    posteewebhook:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - 8082:8082
+        volumes:
+            - bolt:/server/database
+            - config:/config
+        environment:
+            - "AQUAALERT_CFG=/config/cfg.yaml"
+            - "AQUAALERT_DEBUG=ON"
+    posteeui:
+        build:
+            context: .
+            dockerfile: Dockerfile.ui
+        ports:
+            - 8000:8000
+        volumes:
+            - bolt:/server/database
+            - config:/config
+        environment:
+            - "POSTEE_UI_CFG=/config/cfg.yaml"
+            - "POSTEE_UI_PORT=8000"
+            - "POSTEE_UI_UPDATE_URL=http://posteewebhook:8082"
+volumes:
+  bolt:
+  config:

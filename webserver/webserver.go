@@ -9,7 +9,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/aquasecurity/postee/alertmgr"
+	"github.com/aquasecurity/postee/dbservice"
+	"github.com/aquasecurity/postee/router"
 	"github.com/aquasecurity/postee/utils"
 	"github.com/gorilla/mux"
 )
@@ -31,6 +32,24 @@ func Instance() *WebServer {
 	})
 	return wsCtx
 }
+func (ctx *WebServer) withApiKey(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		correctKey, err := dbservice.GetApiKey()
+
+		if err != nil || correctKey == "" {
+			log.Printf("reload API key is either empty or there is an error: %s \n", err)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		}
+
+		if key := r.URL.Query().Get("key"); key != correctKey {
+			log.Printf("reload API received an incorrect key %q", key)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		next(w, r)
+	}
+}
 
 func (ctx *WebServer) Start(host, tlshost string) {
 	log.Printf("Starting WebServer....")
@@ -50,10 +69,14 @@ func (ctx *WebServer) Start(host, tlshost string) {
 	if os.Getenv("AQUAALERT_KEY_PEM") != "" {
 		keyPem = os.Getenv("AQUAALERT_KEY_PEM")
 	}
+	dbservice.EnsureApiKey()
 
 	ctx.router.HandleFunc("/", ctx.sessionHandler(ctx.scanHandler)).Methods("POST")
+	ctx.router.HandleFunc("/tenant/{route}", ctx.sessionHandler(ctx.tenantHandler)).Methods("POST")
 	ctx.router.HandleFunc("/scan", ctx.sessionHandler(ctx.scanHandler)).Methods("POST")
 	ctx.router.HandleFunc("/ping", ctx.sessionHandler(ctx.pingHandler)).Methods("GET")
+
+	ctx.router.HandleFunc("/reload", ctx.withApiKey(ctx.reload)).Methods("GET")
 
 	go func() {
 		log.Printf("Listening for HTTP on %s ", host)
@@ -86,7 +109,7 @@ func (ctx *WebServer) scanHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 	utils.Debug("%s\n\n", string(body))
-	alertmgr.Instance().Send(string(body))
+	router.Instance().Send(body)
 	ctx.writeResponse(w, http.StatusOK, "")
 }
 

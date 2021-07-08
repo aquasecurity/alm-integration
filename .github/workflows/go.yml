@@ -26,7 +26,7 @@ jobs:
       - name: check spell
         uses: codespell-project/actions-codespell@master
         with:
-          skip: src
+          skip: src,rego-templates,ui
 
       - name: Build
         run: make all

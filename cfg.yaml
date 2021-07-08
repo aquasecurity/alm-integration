@@ -1,32 +1,51 @@
----
-- type: common   #  Common settings for all plugins
-  AquaServer:   #  url of Aqua Server for links. E.g. https://myserver.aquasec.com
-  Max_DB_Size: 1000   #  Max size of DB. MB. if empty then unlimited
-  Delete_Old_Data: 10   #  delete data older than N day(s).  If empty then we do not delete.
-  DbVerifyInterval: 1   #  hours. an Interval between tests of DB. Default: 1 hour
+name: tenant          #  the tenant name
+aqua-server: #  url of Aqua Server for links. E.g. https://myserver.aquasec.com
+max-db-size: 1000     #  Max size of DB. MB. if empty then unlimited
+delete-old-data: 10   #  delete data older than N day(s).  If empty then we do not delete.
+db-verify-interval: 1   #  hours. an Interval between tests of DB. Default: 1 hour
 
+routes:
+- name: route1      #  name must be unique
+  input: contains(input.image, "alpine")          #  REGO rules
+  outputs: [my-slack]  #  an integration output which will receive a scan or an audit event
+  template: slack-template   #  a template for this route
+  plugins:
+   aggregate-issues-number:   #  a number of scans to aggregate into one ticket
+   aggregate-issues-timeout:    #  number of seconds, minutes, hours to aggregate, maximum is 24 hours Xs or Xm or Xh)
+   policy-show-all: true # Optional. Open a ticket even if a ticket was opened for same image with same amount of vulnerabilities. Default is false.
+- name: route2      #  name must be unique
+  outputs: [my-email]  #  an integration output which will receive a scan or an audit event
+  template: rego-email   #  a template for this route
+  plugins:
+   aggregate-issues-number:   #  a number of scans to aggregate into one ticket
+   aggregate-issues-timeout:  #  number of seconds, minutes, hours to aggregate, maximum is 24 hours Xs or Xm or Xh)
+   policy-show-all: true # Optional. Open a ticket even if a ticket was opened for same image with same amount of vulnerabilities. Default is false.
+
+templates:
+- name: slack-template         #  name must be unique
+  rego-package:  postee.vuls.slack      #  REGO package for a template
+- name: rego-email                #  name must be unique
+  rego-package:  postee.vuls.html      #  REGO package for a template
+- name: legacy
+  legacy-scan-renderer: html
+- name: legacy-slack
+  legacy-scan-renderer: slack
+- name: custom-email
+  url: # url to custom rego file
+outputs:
 - name: my-jira   #  name must be unique
   type: jira   #  supported types: jira, email
   enable: true
   url:   # Mandatory. E.g "https://johndoe.atlassian.net"
   user:  # Mandatory. E.g :johndoe@gmail.com"
   password:  # Mandatory. Specify Jira user API key
-  project_key:  # Mandatory. Specify the JIRA product key
-  tls_verify: false
+  project-key:  # Mandatory. Specify the JIRA product key
+  tls-verify: false
   board:  # Optional. Specify the Jira board name to open tickets on
   labels:  # Optional, specify array of labels to add to Ticket, for example: ["label1", "label2"]
   issuetype:  # Optional. Specifty the issue type to open (Bug, Task, etc.). Default is "Task"
   priority:   # Optional. Specify the issues severity. Default is "High"
   assignee:   # Optional. Specify the assigned user. Default is the user that opened the ticket
-  Policy-Min-Vulnerability:  # Optional. The minimum vulnerability severity that triggers a ticket
-  Policy-Registry:  # Optional. Comma separated list of registries that will trigger opening a ticket, for example: ["Docker Hub"]
-  Policy-Image-Name:  # Optional. Comma separated list of images that will trigger opening a ticket, for example: ["alpine"]
-  Policy-Non-Compliant:  # Optional. Open a ticket only if image is non-compliant (true) or in any case (false). Default is false
-  Policy-Show-All:  # Optonal. Open a ticket even if a ticket was opened for same image with same amount of vulnerabilities. Default is false.
-  Ignore-Registry:  # Optional. You can specify array of registry names to ignore.
-  Ignore-Image-Name:  # Optional. You can specify array of image names to ignore.
-  Aggregate-Issues-Number:   #  a number of scans to aggregate into one ticket
-  Aggregate-Issues-Timeout:    #  number of seconds, minutes, hours to aggregate, maximum is 24 hours Xs or Xm or Xh)
 
 - name: my-email
   type: email
@@ -37,27 +56,13 @@
   port:  # Mandatory: SMTP server port (e.g. 587)
   sender:  # Mandatory: The email address to use as a sender
   recipients: ["", ""]  # Mandatory: comma separated list of recipients
-  Policy-Min-Vulnerability: high   #  (what is the minimum vulnerability severity that triggers a ticket)
-  Policy-Registry: [alpine, Docker image]  # Optional. Comma separated list of registries that will trigger opening a ticket
-  Policy-Image-Name: [alpine, alpine2]  # Optional. Comma separated list of images that will trigger opening a ticket
-  Policy-Non-Compliant: true  # Optional. Open a ticket only if image is non-compliant (true) or in any case (false)
-  Ignore-Registry: []  # Optional. You can specify array of registry names to ignore.
-  Ignore-Image-Name: []  # Optional. You can specify array of image names to ignore.
-  Policy-Only-Fix-Available:  # Optional. Open ticket only if vulnerability has a fix (true or false)
 
 - name: my-email-smtp-server
   type: email
   enable: true
-  UseMX: true
+  use-mx: true
   sender:  # Mandatory: The email address to use as a sender
   recipients: ["", ""]  # Mandatory: comma separated list of recipients
-  Policy-Min-Vulnerability: high   #  (what is the minimum vulnerability severity that triggers a ticket)
-  Policy-Registry: [alpine, Docker image]  # Optional. Comma separated list of registries that will trigger opening a ticket
-  Policy-Image-Name: [alpine, alpine2]  # Optional. Comma separated list of images that will trigger opening a ticket
-  Policy-Non-Compliant: true  # Optional. Open a ticket only if image is non-compliant (true) or in any case (false)
-  Ignore-Registry: []  # Optional. You can specify array of registry names to ignore.
-  Ignore-Image-Name: []  # Optional. You can specify array of image names to ignore.
-  Policy-Only-Fix-Available:  # Optional. Open ticket only if vulnerability has a fix (true or false)
 
 - name: my-other-email  # this is an example for multiple integrations of same type
   type: email
@@ -68,30 +73,17 @@
   port:  # Mandatory: SMTP server port (e.g. 587)
   sender:  # Mandatory: The email address to use as a sender
   recipients: ["", ""]  # Mandatory: comma separated list of recipients
-  Policy-Min-Vulnerability: high   #  (what is the minimum vulnerability severity that triggers a ticket)
-  Policy-Registry: []  # Optional. Comma separated list of registries that will trigger opening a ticket, e.g. [Docker Hub]
-  Policy-Image-Name: []  # Optional. Comma separated list of images that will trigger opening a ticket, e.g. [alpine]
-  Policy-Non-Compliant:  # Optional. Open a ticket only if image is non-compliant (true) or in any case (false)
-  Ignore-Registry: []  # Optional. You can specify array of registry names to ignore.
-  Ignore-Image-Name: []  # Optional. You can specify array of image names to ignore.
 
 - name: my-slack
   type: slack
   enable: true
   url: https://hooks.slack.com/services/TAAAA/BBB/<key>
 
-  Policy-Min-Vulnerability:  # Optional (what is the minimum vulnerability severity that triggers a ticket)
-  Policy-Registry:  # Optional. Comma separated list of registries that will trigger opening a ticket
-  Policy-Image-Name:  # Optional. Comma separated list of images that will trigger opening a ticket
-  Policy-Non-Compliant: true  # Optional. Open a ticket only if image is non-compliant (true) or in any case (false)
-  Ignore-Registry:  # Optional. You can specify array of registry names to ignore.
-  Ignore-Image-Name:  # Optional. You can specify array of image names to ignore.
-
 - name: ms-team
   type: teams
   enable: true
   url: https://outlook.office.com/webhook/....   #  Webhook's url
-  Policy-OPA: ["/config/policy.rego"]
+  policy-opa: ["/config/policy.rego"]
 
 - name: webhook
   type: webhook
@@ -103,7 +95,7 @@
   enable: true
   url: http://localhost:8088 # Mandatory. Url of a Splunk server
   token: <token> # Mandatory. a HTTP Event Collector Token
-  SizeLimit: 10000 # Optional. Maximum scan length, in bytes. Default: 10000
+  size-limit: 10000 # Optional. Maximum scan length, in bytes. Default: 10000
 
 - name: my-servicenow
   type: serviceNow
@@ -112,10 +104,3 @@
   password:  # Mandatory. Specify user API key
   instance:  # Mandatory. Name of ServiceN  ow Instance
   board:   #  Specify the ServiceNow board name to open tickets on. Default is "incident"
-
-  Policy-Min-Vulnerability:  # (what is the minimum vulnerability severity that triggers a ticket)
-  Policy-Registry:  # Optional. Comma separated list of registries that will trigger opening a ticket
-  Policy-Image-Name:  # Optional. Comma separated list of images that will trigger opening a ticket
-  Policy-Non-Compliant:  # Optional. Open a ticket only if image is non-compliant (true) or in any case (false)
-  Ignore-Registry: []  # Optional. You can specify array of registry names to ignore.
-  Ignore-Image-Name: []  # Optional. You can specify array of image names to ignore.

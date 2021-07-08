@@ -79,3 +79,7 @@ func BuildUniqueId(digest, image, registry string) string {
 func (si *ScanImageInfo) GetUniqueId() string {
 	return BuildUniqueId(si.Digest, si.Image, si.Registry)
 }
+
+func (si *ScanImageInfo) HasId() bool {
+	return si.Digest != "" || si.Image != "" || si.Registry != ""
+}

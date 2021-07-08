@@ -13,6 +13,7 @@ RUN mkdir /server
 RUN mkdir /server/database
 RUN mkdir /config
 COPY --from=builder /webhook/bin /server/
+COPY --from=builder /webhook/rego-templates /server/rego-templates
 COPY --from=builder /webhook/cfg.yaml /config/
 WORKDIR /server
 RUN chmod +x postee

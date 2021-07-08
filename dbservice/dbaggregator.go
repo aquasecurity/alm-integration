@@ -2,10 +2,11 @@ package dbservice
 
 import (
 	"encoding/json"
+
 	bolt "go.etcd.io/bbolt"
 )
 
-func AggregateScans(plugin string,
+func AggregateScans(output string,
 	currentScan map[string]string,
 	scansPerTicket int,
 	ignoreTheQuantity bool) ([]map[string]string, error) {
@@ -27,7 +28,7 @@ func AggregateScans(plugin string,
 	if len(currentScan) > 0 {
 		aggregatedScans = append(aggregatedScans, currentScan)
 	}
-	currentValue, err := dbSelect(db, dbBucketAggregator, plugin)
+	currentValue, err := dbSelect(db, dbBucketAggregator, output)
 	if err != nil {
 		return nil, err
 	}
@@ -47,12 +48,12 @@ func AggregateScans(plugin string,
 			return nil, err
 		}
 
-		err = dbInsert(db, dbBucketAggregator, []byte(plugin), saving)
+		err = dbInsert(db, dbBucketAggregator, []byte(output), saving)
 		if err != nil {
 			return nil, err
 		}
 		return nil, nil
 	}
-	dbInsert(db, dbBucketAggregator, []byte(plugin), nil)
+	dbInsert(db, dbBucketAggregator, []byte(output), nil)
 	return aggregatedScans, nil
 }

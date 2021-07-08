@@ -2,10 +2,17 @@ package layout
 
 import (
 	"bytes"
-	"github.com/aquasecurity/postee/data"
 	"strconv"
+
+	"github.com/aquasecurity/postee/data"
 )
 
+func GenTestDescription(provider LayoutProvider, raw string) string {
+	var builder bytes.Buffer
+	builder.WriteString(provider.P(raw))
+
+	return builder.String()
+}
 func GenTicketDescription(provider LayoutProvider, scanInfo, prevScan *data.ScanImageInfo, link string) string {
 	var builder bytes.Buffer
 	builder.WriteString(provider.P("Image name: " + scanInfo.Image))

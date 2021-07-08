@@ -14,7 +14,7 @@ func TestAggregateScans(t *testing.T) {
 	)
 
 	var tests = [...]struct {
-		plugin         string
+		output         string
 		currentScan    map[string]string
 		scansPerTicket int
 		want           []map[string]string
@@ -54,7 +54,7 @@ func TestAggregateScans(t *testing.T) {
 
 	for i := 0; i < len(tests); i++ {
 		test := tests[i]
-		aggregated, err := AggregateScans(test.plugin, test.currentScan, test.scansPerTicket, false)
+		aggregated, err := AggregateScans(test.output, test.currentScan, test.scansPerTicket, false)
 		if err != nil {
 			t.Errorf("AggregateScans Error: %v", err)
 			continue
